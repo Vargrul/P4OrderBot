@@ -10,6 +10,7 @@ from orderbot.src.userCtrl import UserCtrl
 import orderbot.src.errors as errors
 import orderbot.src.global_data as global_data
 import orderbot.src.webOrderParser as webOrderParser
+import orderbot.src.help_strs as help_strs
 
 def valid_link(url: str):
     # validate web page test
@@ -55,7 +56,10 @@ def start_discord_bot():
 
     # TODO Handle variable arg length (both a single long string and cut up)
     # TODO output for Discord should look like the !list cmd, reuse?
-    @bot.command(name='buy')
+    @bot.command(name='buy', 
+        brief=help_strs.BUY_BRIEF_STR, 
+        usage=help_strs.BUY_USAGE_STR, 
+        help=help_strs.BUY_HELP_STR)
     async def add_order(ctx: commands.context.Context, *, arg: str):
         try:
             if valid_link(arg):
@@ -69,7 +73,7 @@ def start_discord_bot():
             print(orderCtrl)
 
             # TODO Redo the respose for better Discord output
-            reponse = 'buy command\n' + str(orderCtrl)
+            reponse = '@everyone buy command\n' + str(orderCtrl)
             # reponse = reponse + '\n'.join("{} ({})".format(item, amount) for item, amount in order.items())
         except errors.ReqUserNotRegistered:
             reponse = f"User **{ctx.author.display_name}** is not registered to make buy orders."
@@ -77,7 +81,10 @@ def start_discord_bot():
         await ctx.send(reponse)
 
     # TODO add id and alias as usabel name, is currently not working
-    @bot.command(name='fill')
+    @bot.command(name='fill',
+        brief=help_strs.FILL_BRIEF_STR,
+        usage=help_strs.FILL_USAGE_STR,
+        help=help_strs.FILL_HELP_STR)
     async def fill_order(ctx: commands.context.Context, in_identifier_args: str, *, order: str):
         identifier_args = re.findall(r'\w+', in_identifier_args)
         if len(identifier_args) == 1:
@@ -109,12 +116,18 @@ def start_discord_bot():
         await ctx.send(reponse)
         await list_order(ctx)
 
-    @bot.command(name='cancelfill')
+    @bot.command(name='cancelfill',
+        brief=help_strs.CANCELFILL_BRIEF_STR,
+        usage=help_strs.CANCELFILL_USAGE_STR,
+        help=help_strs.CANCELFILL_HELP_STR)
     async def cancle_order(ctx: commands.context.Context, *, args):
         reponse = 'NOT IMPLEMENTED!\ncanclebuy command'
         await ctx.send(reponse)
 
-    @bot.command(name='list')
+    @bot.command(name='list',
+        brief=help_strs.LIST_BRIEF_STR,
+        usage=help_strs.LIST_USAGE_STR,
+        help=help_strs.LIST_HELP_STR)
     async def list_order(ctx: commands.context.Context):
         # TODO Redo the response for better discord output
         response = "***Current outstanding orders:***\n"
@@ -133,13 +146,19 @@ def start_discord_bot():
         #     response = response + f"{str(o)}\n"
         await ctx.send(response)
 
-    @bot.command(name='cancelbuy')
+    @bot.command(name='cancelbuy',
+        brief=help_strs.CANCELBUY_BRIEF_STR,
+        usage=help_strs.CANCELBUY_USAGE_STR,
+        help=help_strs.CANCELBUY_HELP_STR)
     async def cancle_order(ctx: commands.context.Context, id: int):
         orderCtrl.delete_order(id)
         reponse = f'**Orders with ID: {id} was canceled.**'
         await ctx.send(reponse)
 
-    @bot.command(name='adduser')
+    @bot.command(name='adduser',
+        brief=help_strs.ADDUSER_BRIEF_STR,
+        usage=help_strs.ADDUSER_USAGE_STR,
+        help=help_strs.ADDUSER_HELP_STR)
     async def add_user(ctx: commands.context.Context, user_name: str, alias: str, priority: int, disc: str):
         try:
             userCtrl.add_user(user_name, ctx.author.display_name, alias=alias, priority=priority, discription=disc)
@@ -157,7 +176,11 @@ def start_discord_bot():
 
         await ctx.send(response)
 
-    @bot.command(name='removeuser')
+    # TODO add remove by alias or ID
+    @bot.command(name='removeuser',
+        brief=help_strs.REMOVEUSER_BRIEF_STR,
+        usage=help_strs.REMOVEUSER_USAGE_STR,
+        help=help_strs.REMOVEUSER_HELP_STR)
     async def remove_user(ctx: commands.context.Context, *, user_name: str):
         try:
             userCtrl.remove_user(user_name)
@@ -169,7 +192,10 @@ def start_discord_bot():
             
         await ctx.send(response)
 
-    @bot.command(name='listusers')
+    @bot.command(name='listusers',
+        brief=help_strs.LISTUSERS_BRIEF_STR,
+        usage=help_strs.LISTUSERS_USAGE_STR,
+        help=help_strs.LISTUSERS_HELP_STR)
     async def list_users(ctx: commands.context.Context):
         response = "***Current registered users(buyers):***\n"
         for u in userCtrl.users:
