@@ -4,6 +4,7 @@ import discord
 from dotenv import load_dotenv, main
 from discord.ext import commands
 import re
+from pathlib import Path
 
 from orderbot.src.orderCtrl import OrderCtrl
 from orderbot.src.userCtrl import UserCtrl
@@ -24,6 +25,9 @@ def valid_link(url: str):
     
     return regex.search(url)
 
+def _init_misc():
+    Path(Path(__file__).parent / "data/").mkdir(exist_ok=True)
+
 
 def start_discord_bot():
     global_data.load_nonstatic_globals()
@@ -35,6 +39,8 @@ def start_discord_bot():
 
     load_dotenv()
     TOKEN = os.getenv('DISCORD_TOKEN')
+
+    _init_misc()
 
     description = '''A bot to track PI4 orders!
 
@@ -73,7 +79,7 @@ def start_discord_bot():
             print(orderCtrl)
 
             # TODO Redo the respose for better Discord output
-            reponse = '@everyone buy command\n' + str(orderCtrl)
+            reponse = 'buy command\n' + str(orderCtrl)
             # reponse = reponse + '\n'.join("{} ({})".format(item, amount) for item, amount in order.items())
         except errors.ReqUserNotRegistered:
             reponse = f"User **{ctx.author.display_name}** is not registered to make buy orders."
