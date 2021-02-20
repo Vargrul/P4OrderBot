@@ -86,41 +86,47 @@ def start_discord_bot():
 
         await ctx.send(reponse)
 
-    # TODO add id and alias as usabel name, is currently not working
     @bot.command(name='fill',
         brief=help_strs.FILL_BRIEF_STR,
         usage=help_strs.FILL_USAGE_STR,
         help=help_strs.FILL_HELP_STR)
-    async def fill_order(ctx: commands.context.Context, in_identifier_args: str, *, order: str):
-        identifier_args = re.findall(r'\w+', in_identifier_args)
-        if len(identifier_args) == 1:
-            user_name = identifier_args[0]
-        elif len(identifier_args) == 2:
-            if identifier_args[0].lower() == 'alias':
-                for user in userCtrl.users:
-                    if user.alias == identifier_args[1]:
+    async def fill_order(ctx: commands.context.Context, in_identifier_args: str, order: str):
+        try:
+            found_maching_user = False
+            for user in userCtrl.users:
+                if in_identifier_args.isdigit():
+                    if user.id == int(in_identifier_args):
                         user_name = user.name
-            elif identifier_args[0].lower() == 'id':
-                for user in userCtrl.users:
-                    if user.id == int(identifier_args[1]):
+                        found_maching_user = True
+                        break
+                else:
+                    if user.alias == in_identifier_args or user.name == in_identifier_args:
                         user_name = user.name
+                        found_maching_user = True
+                        break
+
+            if not found_maching_user:
+                raise errors.IdentifierError
+                
+
+            if valid_link(order):
+                item, count = webOrderParser.get_lsts_from_web_order(order)
             else:
-                reponse = 'Invalid identifier args.'
-                await ctx.send(reponse)
-                return
+                count = re.findall(r'\d+', order)
+                count = [int(c) for c in count]
+                item = re.findall(r'[a-zA-Z]+', order)
 
-        if valid_link(order):
-            item, count = webOrderParser.get_lsts_from_web_order(order)
-        else:
-            count = re.findall(r'\d+', order)
-            count = [int(c) for c in count]
-            item = re.findall(r'[a-zA-Z]+', order)
-
-        # TODO Change this function to take either ID, Alisas or Name
-        orderCtrl.fill_order_from_lists(user_name, item, count)
-        reponse = '**Orders was filled.**\n\n'
+            # TODO Change this function to take either ID, Alisas or Name
+            orderCtrl.fill_order_from_lists(user_name, item, count)
+            reponse = '**Orders was filled.**\n\n'
+            await ctx.send(reponse)
+            await list_order(ctx)
+            return
+        except errors.IdentifierError:
+            reponse = 'Invalid identifier, make sure it was spelled corretly and the user exits.'
+        
         await ctx.send(reponse)
-        await list_order(ctx)
+
 
     @bot.command(name='cancelfill',
         brief=help_strs.CANCELFILL_BRIEF_STR,
@@ -147,9 +153,6 @@ def start_discord_bot():
                 response = response + (f'{item.count:7} - {item.name:25}\n')
             response = response + f'```'
             
-                
-        # for o in orderCtrl.orders:
-        #     response = response + f"{str(o)}\n"
         await ctx.send(response)
 
     @bot.command(name='cancelbuy',

@@ -14,3 +14,6 @@ class UserIsNotRegistired(UserError):
 
 class OrderError(Exception):
     pass
+
+class IdentifierError(Exception):
+    pass

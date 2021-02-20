@@ -1,7 +1,7 @@
 username_str = '\"<user name>\"'
 alias_str = '\"<alias>\"'
 discription_str = '\"<discription>\"'
-identify_str = '<("user name")|alias:(alias)|id:(user id)>'
+identify_str = '<"user name" | "alias" | user id>'
 
 
 BUY_BRIEF_STR = f"Add buy order"
@@ -19,13 +19,13 @@ FILL_BRIEF_STR = f"Fill a buy order"
 FILL_USAGE_STR = f'{identify_str} <(link|amount shorthand)>'
 FILL_HELP_STR = f"""Fill a buy order.
 
-    {identify_str:20} - Either name, alias or ID or buyer. For alias and id used, the prefix are needed.
+    {identify_str:20} - Either name, alias or ID or buyer.
     {'<(link|amount shorthand)>':20} - The argument for the command can be an appraisal link form either janice.e-351.com/ or http://evepraisal.com/, alternatively a text string of amount follow by shorthand.
 
     Examples:
-    \t!buy https://janice.e-351.com/a/CaukRs
-    \t!buy http://evepraisal.com/a/ykpgr
-    \t!buy 234 SC 184 NF 100 IRD 184 OMA 53 BN 53 SHPC 53 RCM 40 WM"""
+    \t!buy Neorim" https://janice.e-351.com/a/CaukRs
+    \t!buy Neo http://evepraisal.com/a/ykpgr
+    \t!buy 14 234 SC 184 NF 100 IRD 184 OMA 53 BN 53 SHPC 53 RCM 40 WM"""
 
 CANCELFILL_BRIEF_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_USAGE_STR = f"NOT YET IMPLEMENTED"
