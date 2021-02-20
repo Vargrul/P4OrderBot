@@ -61,7 +61,6 @@ def start_discord_bot():
         print('------')
 
     # TODO Handle variable arg length (both a single long string and cut up)
-    # TODO output for Discord should look like the !list cmd, reuse?
     @bot.command(name='buy', 
         brief=help_strs.BUY_BRIEF_STR, 
         usage=help_strs.BUY_USAGE_STR, 
@@ -75,16 +74,15 @@ def start_discord_bot():
                 count = [int(c) for c in count]
                 item = re.findall(r'[a-zA-Z]+', arg)
             
-            orderCtrl.add_order_from_lists(ctx.author.display_name, userCtrl, item, count)
-            print(orderCtrl)
+            order = orderCtrl.add_order_from_lists(ctx.author.display_name, userCtrl, item, count)
 
-            # TODO Redo the respose for better Discord output
-            reponse = 'buy command\n' + str(orderCtrl)
-            # reponse = reponse + '\n'.join("{} ({})".format(item, amount) for item, amount in order.items())
+            response = f"***The following buy order was added:***\n{order.to_discord_string()}"
+            # response = 'buy command\n' + order.to_discord_string()
+            
         except errors.ReqUserNotRegistered:
-            reponse = f"User **{ctx.author.display_name}** is not registered to make buy orders."
+            response = f"User **{ctx.author.display_name}** is not registered to make buy orders."
 
-        await ctx.send(reponse)
+        await ctx.send(response)
 
     @bot.command(name='fill',
         brief=help_strs.FILL_BRIEF_STR,
@@ -144,14 +142,7 @@ def start_discord_bot():
         # TODO Redo the response for better discord output
         response = "***Current outstanding orders:***\n"
         for o in orderCtrl.orders:
-            order_issuer: User = [u for u in userCtrl.users if o.user_name == u.name][0]
-            response = response + (
-                f'Issuer: **{order_issuer.name}** Alias: **{order_issuer.alias}**\n'
-                f'Order ID: **{o.id}**\n```'
-                )
-            for item in o.items:
-                response = response + (f'{item.count:7} - {item.name:25}\n')
-            response = response + f'```'
+            response = response + o.to_discord_string()
             
         await ctx.send(response)
 

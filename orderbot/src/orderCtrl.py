@@ -31,12 +31,13 @@ class OrderCtrl:
         self.save_orders()
         pass
 
-    def add_order_from_items(self, user: User, items: List[Item]):
+    def add_order_from_items(self, user: User, items: List[Item]) -> Order:
         order = Order(user, items)
         self.add_order(order)
+        return order
 
-    def add_order_from_lists(self, user: str, user_ctrl: UserCtrl, name_lst: List[str], count_lst: List[int]):
-        if not user_ctrl.user_is_registered(user):
+    def add_order_from_lists(self, user_name: str, user_ctrl: UserCtrl, name_lst: List[str], count_lst: List[int]) -> Order:
+        if not user_ctrl.user_is_registered(user_name):
             raise errors.ReqUserNotRegistered
 
         # add items not in order for completeness
@@ -57,8 +58,7 @@ class OrderCtrl:
         for name, count in item_in_lst:
             items.append(Item(name, count))
             
-        self.add_order_from_items(user, items)
-        pass
+        return self.add_order_from_items(user_ctrl.get_user_by_name(user_name), items)
 
     # TODO Add error handling for order not existing in list.
     def delete_order(self, order_id):
@@ -75,7 +75,7 @@ class OrderCtrl:
         # get orders from user
         order_nrs = []
         for i, o in enumerate(self.orders):
-            if o.user_name == target_user:
+            if o.user.name == target_user:
                 order_nrs.append(i)
 
         # must be able to do this better -.-
@@ -129,7 +129,7 @@ class OrderCtrl:
     def save_orders(self):
         order_dict = []
         for o in self.__orders:
-            tmp_dict = [o.user_name, o.date, o.id]
+            tmp_dict = [o.user, o.date, o.id]
             tmp_dict.append([[i.count, i.name, i.alias] for i in o.items])
             order_dict.append(tmp_dict)
         # order_dict = [[o.user, o.date, o.items] for o in self.__orders]

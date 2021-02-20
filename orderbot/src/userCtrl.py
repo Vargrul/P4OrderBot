@@ -47,6 +47,11 @@ class UserCtrl:
                 del self.users[i]
                 self.save_users()
 
+    def get_user_by_name(self, user_name: str) -> User:
+        for user in self.users:
+            if user.name == user_name:
+                return user
+
     def user_is_registered(self, user_name: str) -> bool:
         for user in self.users:
             if user_name == user.name:
