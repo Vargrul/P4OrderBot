@@ -1,4 +1,4 @@
-from orderbot.src.user import User
+from discord.ext.commands.errors import MemberNotFound
 import os
 import discord
 from dotenv import load_dotenv, main
@@ -27,7 +27,6 @@ def valid_link(url: str):
 
 def _init_misc():
     Path(Path(__file__).parent / "data/").mkdir(exist_ok=True)
-
 
 def start_discord_bot():
     global_data.load_nonstatic_globals()
@@ -67,14 +66,18 @@ def start_discord_bot():
         help=help_strs.BUY_HELP_STR)
     async def add_order(ctx: commands.context.Context, *, arg: str):
         try:
+            if not userCtrl.user_is_registered(ctx.author):
+                raise errors.ReqUserNotRegistered
+        
             if valid_link(arg):
                 item, count = webOrderParser.get_lsts_from_web_order(arg)
             else:
                 count = re.findall(r'\d+', arg)
                 count = [int(c) for c in count]
                 item = re.findall(r'[a-zA-Z]+', arg)
-            
-            order = orderCtrl.add_order_from_lists(ctx.author.display_name, userCtrl, item, count)
+
+            user = userCtrl.get_user_from_member(ctx.author)
+            order = orderCtrl.add_order_from_lists(user, item, count, ctx.guild, ctx.channel)
 
             response = f"***The following buy order was added:***\n{order.to_discord_string()}"
             # response = 'buy command\n' + order.to_discord_string()
@@ -88,25 +91,35 @@ def start_discord_bot():
         brief=help_strs.FILL_BRIEF_STR,
         usage=help_strs.FILL_USAGE_STR,
         help=help_strs.FILL_HELP_STR)
-    async def fill_order(ctx: commands.context.Context, in_identifier_args: str, order: str):
+    async def fill_order(ctx: commands.context.Context, in_identifier_args, order: str):
         try:
             found_maching_user = False
-            for user in userCtrl.users:
-                if in_identifier_args.isdigit():
-                    if user.id == int(in_identifier_args):
-                        user_name = user.name
-                        found_maching_user = True
-                        break
-                else:
-                    if user.alias == in_identifier_args or user.name == in_identifier_args:
-                        user_name = user.name
-                        found_maching_user = True
-                        break
+            try:
+                member = await commands.MemberConverter().convert(ctx, in_identifier_args)
+                user = userCtrl.get_user_from_member(member)
+                found_maching_user = True
+            except MemberNotFound:
+                for user in userCtrl.users:
+                    if in_identifier_args.isdigit():
+                        if user.id == int(in_identifier_args):
+                            user = userCtrl.get_user_by_id(int(in_identifier_args))
+                            found_maching_user = True
+                            break
+                    else:
+                        if user.alias == in_identifier_args:
+                            user = userCtrl.get_user_by_alias(in_identifier_args)
+                            found_maching_user = True
+                            break
 
             if not found_maching_user:
                 raise errors.IdentifierError
-                
+            
 
+            guild_orders = orderCtrl.get_orders(ctx.guild)
+            if len([o for o in guild_orders if o.user == user]) == 0:
+                raise errors.OrderError
+
+            
             if valid_link(order):
                 item, count = webOrderParser.get_lsts_from_web_order(order)
             else:
@@ -114,16 +127,19 @@ def start_discord_bot():
                 count = [int(c) for c in count]
                 item = re.findall(r'[a-zA-Z]+', order)
 
-            # TODO Change this function to take either ID, Alisas or Name
-            orderCtrl.fill_order_from_lists(user_name, item, count)
-            reponse = '**Orders was filled.**\n\n'
-            await ctx.send(reponse)
+
+
+            orderCtrl.fill_order_from_lists(user, item, count)
+            response = '**Orders was filled.**\n\n'
+            await ctx.send(response)
             await list_order(ctx)
             return
         except errors.IdentifierError:
-            reponse = 'Invalid identifier, make sure it was spelled corretly and the user exits.'
+            response = 'Invalid identifier, make sure it was spelled corretly and the user exits.'
+        except errors.OrderError:
+            response = 'User does not have any orders.'
         
-        await ctx.send(reponse)
+        await ctx.send(response)
 
 
     @bot.command(name='cancelfill',
@@ -141,7 +157,7 @@ def start_discord_bot():
     async def list_order(ctx: commands.context.Context):
         # TODO Redo the response for better discord output
         response = "***Current outstanding orders:***\n"
-        for o in orderCtrl.orders:
+        for o in orderCtrl.get_orders(ctx.guild):
             response = response + o.to_discord_string()
             
         await ctx.send(response)
@@ -159,9 +175,10 @@ def start_discord_bot():
         brief=help_strs.ADDUSER_BRIEF_STR,
         usage=help_strs.ADDUSER_USAGE_STR,
         help=help_strs.ADDUSER_HELP_STR)
-    async def add_user(ctx: commands.context.Context, user_name: str, alias: str, priority: int, disc: str):
+    async def add_user(ctx: commands.context.Context, member: discord.Member, alias: str, priority: int, disc: str):
         try:
-            userCtrl.add_user(user_name, ctx.author.display_name, alias=alias, priority=priority, discription=disc)
+            userCtrl.add_user(member, ctx.author, alias=alias, priority=priority, discription=disc)
+
             response = (
                 f"Added user **{userCtrl.users[-1].name}** "
                 f"(alias:**{userCtrl.users[-1].alias}**) with "
@@ -170,9 +187,9 @@ def start_discord_bot():
                 f"Desctiption: *{userCtrl.users[-1].disc}*"
                 )
         except errors.ReqUserNotRegistered:
-            response = f"Could not add **{user_name}** you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
+            response = f"Could not add **{member.display_name}**, as you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
         except errors.UserAlreadyRegistired:
-            response = f"The user: **{user_name}** is already a registered user."
+            response = f"The user: **{member.display_name}** is already a registered user."
 
         await ctx.send(response)
 
@@ -181,12 +198,12 @@ def start_discord_bot():
         brief=help_strs.REMOVEUSER_BRIEF_STR,
         usage=help_strs.REMOVEUSER_USAGE_STR,
         help=help_strs.REMOVEUSER_HELP_STR)
-    async def remove_user(ctx: commands.context.Context, *, user_name: str):
+    async def remove_user(ctx: commands.context.Context, *, member: discord.Member):
         try:
-            userCtrl.remove_user(user_name)
-            response = f"Removed user: **{user_name}**"
+            userCtrl.remove_user(member, ctx.author)
+            response = f"Removed user: **{member.display_name}**"
         except errors.ReqUserNotRegistered:
-            response = f"Could not add **{user_name}** you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
+            response = f"Could not remove **{member.display_name}** you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
         except errors.UserIsNotRegistired:
             response = f"Could not find user.\nPlease check the username is correct."
             

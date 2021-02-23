@@ -6,15 +6,23 @@ from orderbot.src.global_data import P4_ITEM_NAMES
 import orderbot.src.errors as errors
 from typing import List
 import pickle
+from discord import Guild, TextChannel
 
 class OrderCtrl:
     
     def __init__(self):
         self.orders = []
-    
-    @property
-    def orders(self):
+
+    def get_orders(self, guild: Guild=None, channel: TextChannel=None) -> List[Order]:
+        if guild != None:
+            if channel != None:
+                return [o for o in self.__orders if o.channel_id == channel.id and o.guild_id == guild.id]
+            else:
+                return [o for o in self.__orders if o.guild_id == guild.id]
+
         return self.__orders
+
+    orders = property(get_orders)
 
     @orders.setter
     def orders(self, orders: List[Order]):
@@ -31,15 +39,12 @@ class OrderCtrl:
         self.save_orders()
         pass
 
-    def add_order_from_items(self, user: User, items: List[Item]) -> Order:
-        order = Order(user, items)
+    def add_order_from_items(self, user: User, items: List[Item], guild: Guild, channel: TextChannel) -> Order:
+        order = Order(user, items, guild_id=guild.id, guild_name=guild.name, channel_id=channel.id, channel_name=channel.name)
         self.add_order(order)
         return order
 
-    def add_order_from_lists(self, user_name: str, user_ctrl: UserCtrl, name_lst: List[str], count_lst: List[int]) -> Order:
-        if not user_ctrl.user_is_registered(user_name):
-            raise errors.ReqUserNotRegistered
-
+    def add_order_from_lists(self, user: User, name_lst: List[str], count_lst: List[int], guild: Guild, channel: TextChannel) -> Order:
         # add items not in order for completeness
         for i_n in P4_ITEM_NAMES:
             if not any(e in i_n for e in name_lst):
@@ -58,7 +63,7 @@ class OrderCtrl:
         for name, count in item_in_lst:
             items.append(Item(name, count))
             
-        return self.add_order_from_items(user_ctrl.get_user_by_name(user_name), items)
+        return self.add_order_from_items(user, items, guild, channel)
 
     # TODO Add error handling for order not existing in list.
     def delete_order(self, order_id):
@@ -71,11 +76,11 @@ class OrderCtrl:
     # Gives error if not needed
     # - (Secondary) Take Partial??
     # First in -> First out
-    def fill_order(self, target_user: str, in_items: List[Item]):
+    def fill_order(self, user: User, in_items: List[Item]):
         # get orders from user
         order_nrs = []
         for i, o in enumerate(self.orders):
-            if o.user.name == target_user:
+            if o.user.discord_id == user.discord_id:
                 order_nrs.append(i)
 
         # must be able to do this better -.-
@@ -105,7 +110,7 @@ class OrderCtrl:
         # Check if order was fille, if so -> remove order. (pm issuer?)
         pass
 
-    def fill_order_from_lists(self, user: str, name_lst: List[str], count_lst: List[int]):
+    def fill_order_from_lists(self, user: User, name_lst: List[str], count_lst: List[int]):
         # REPEATED CODE! Should be in another funciton (same as add_order_from_lists())
         for i_n in P4_ITEM_NAMES:
             if not any(e in i_n for e in name_lst):
@@ -127,30 +132,15 @@ class OrderCtrl:
         self.fill_order(user, items)
 
     def save_orders(self):
-        order_dict = []
-        for o in self.__orders:
-            tmp_dict = [o.user, o.date, o.id]
-            tmp_dict.append([[i.count, i.name, i.alias] for i in o.items])
-            order_dict.append(tmp_dict)
-        # order_dict = [[o.user, o.date, o.items] for o in self.__orders]
         try:
             with open('orderbot/data/orders.pckl', 'wb') as file:
-                pickle.dump(order_dict, file, pickle.HIGHEST_PROTOCOL)
+                pickle.dump(self.__orders, file, pickle.HIGHEST_PROTOCOL)
         except:
             return
 
     def load_orders(self):
-        order_dict = []
         try:
             with open('orderbot/data/orders.pckl', 'rb') as file:
-                order_dict = pickle.load(file)
+                self.__orders = pickle.load(file)
         except:
             return
-        orders = []
-        for od in order_dict:
-            items = []
-            for id in od[3]:
-                items.append(Item(id[1], id[0], id[2]))
-            orders.append(Order(od[0], items, date = od[1], id = od[2]))
-        
-        self.__orders = orders

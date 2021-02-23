@@ -6,14 +6,19 @@ import orderbot.src.global_data as global_data
 from typing import List
 
 class Order:
-    def __init__(self, user: User, items: List[Item] = None, date: datetime = datetime.now(), id = None):
-        self.user = user
-        self.items = items
-        self.date = date
+    def __init__(self, user: User, items: List[Item] = None, date: datetime = datetime.now(), id: int = None, guild_id: int = None, guild_name: str = None, channel_id: int = None, channel_name: str = None):
+        self.user: User = user
+        self.items: Item = items
+        self.date: datetime = date
         if id is None:
-            self.id = global_data.get_new_order_id()
+            self.id: int = global_data.get_new_order_id()
         else:
-            self.id = id
+            self.id: int = id
+
+        self.guild_id: int = guild_id
+        self.guild_name: str = guild_name
+        self.channel_id: int = channel_id
+        self.channel_name: str = channel_name
 
     def add_item(self, item):
         self.items.append(item)

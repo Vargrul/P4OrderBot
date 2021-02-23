@@ -1,3 +1,5 @@
+import discord
+from discord import user
 from orderbot.src.user import User
 import orderbot.src.errors as error
 from typing import List
@@ -5,56 +7,57 @@ import pickle
 
 class UserCtrl:
     def __init__(self, users: List[User] = []) -> None:
-        self.users = users
+        self.users: List[User] = users
 
     def save_users(self) -> None:
-        user_dict = [[u.name, u.priority, u.alias, u.disc, u.id] for u in self.users]
         with open('orderbot/data/users.pckl', 'wb') as file:
-            pickle.dump(user_dict, file, pickle.HIGHEST_PROTOCOL)
+            pickle.dump(self.users, file, pickle.HIGHEST_PROTOCOL)
 
     def load_users(self) -> None:
-        user_dict = []
         try:
             with open('orderbot/data/users.pckl', 'rb') as file:
-                user_dict = pickle.load(file)
+                self.users = pickle.load(file)
         except:
             return
 
-        users = []
-        for ud in user_dict:
-            users.append(User(*ud))
-        
-        self.users = users
-
-    def add_user(self, user_name: str, requesting_user_name: str, priority: int=5, discription: str="", alias = None) -> None:
-        if not self.user_is_registered(requesting_user_name) and len(self.users) != 0:
+    def add_user(self, member: discord.Member, requesting_member: discord.Member, priority: int=5, discription: str="", alias = None) -> None:
+        if not self.user_is_registered(requesting_member) and len(self.users) != 0:
             raise error.ReqUserNotRegistered
-        elif self.user_is_registered(user_name):
+        elif self.user_is_registered(member):
             raise error.UserAlreadyRegistired
 
-        self.users.append(User(user_name, priority, alias=alias, disc = discription, ))
+        self.users.append(User(member.display_name, priority, alias=alias, disc = discription, discord_id=member.id, discord_name=member.name, discord_discriminator=member.discriminator))
         self.save_users()
 
 
-    def remove_user(self, user_name: str, requesting_user_name: str) -> None:
-        if not self.user_is_registered(requesting_user_name):
+    def remove_user(self, member: discord.Member, requesting_member: discord.Member) -> None:
+        if not self.user_is_registered(requesting_member):
             raise error.ReqUserNotRegistered
-        elif not self.user_is_registered(user_name):
+        elif not self.user_is_registered(member):
             raise error.UserIsNotRegistired
 
         for i, u in enumerate(self.users):
-            if u.name == user_name:
+            if u.discord_id == member.id:
                 del self.users[i]
                 self.save_users()
 
-    def get_user_by_name(self, user_name: str) -> User:
+    # TODO Make these functions in to one
+    def get_user_by_alias(self, alias: str) -> User:
         for user in self.users:
-            if user.name == user_name:
+            if user.alias == alias:
+                return user
+    
+    def get_user_by_id(self, user_id: int) -> User:
+        for user in self.users:
+            if user.id == user_id:
                 return user
 
-    def user_is_registered(self, user_name: str) -> bool:
+    def get_user_from_member(self, member: discord.Member) -> User:
+        return next(u for u in self.users if u.discord_id == member.id)
+
+    def user_is_registered(self, member: discord.Member) -> bool:
         for user in self.users:
-            if user_name == user.name:
+            if member.id == user.discord_id:
                 return True
 
         return False
