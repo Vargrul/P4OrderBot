@@ -1,17 +1,19 @@
+import discord
+from discord import errors
 from orderbot.src.item import Item
 from orderbot.src.order import Order
 from orderbot.src.user import User
 from orderbot.src.userCtrl import UserCtrl
 from orderbot.src.global_data import P4_ITEM_NAMES
 # import orderbot.src.errors as errors
-from typing import List
+from typing import List, Tuple
 import pickle
 from discord import Guild, TextChannel
 
 class OrderCtrl:
     
     def __init__(self):
-        self.orders = []
+        self.orders: Tuple[Order] = []
 
     def get_orders(self, guild: Guild=None, channel: TextChannel=None) -> List[Order]:
         if guild != None:
@@ -130,6 +132,12 @@ class OrderCtrl:
             items.append(Item(name, count))
 
         self.fill_order(user, items)
+
+    def check_order_id(self, id: int, guild: Guild = None, channel: TextChannel = None) -> bool:
+        for o in self.get_orders(guild, channel):
+            if o.id == id:
+                return True
+        return False
 
     def save_orders(self):
         try:

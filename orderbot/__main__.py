@@ -1,4 +1,5 @@
 from typing import List, Pattern, Tuple
+from discord import guild
 from discord.ext.commands.errors import MemberNotFound
 import os
 import discord
@@ -210,9 +211,14 @@ def start_discord_bot():
         usage=help_strs.CANCELBUY_USAGE_STR,
         help=help_strs.CANCELBUY_HELP_STR)
     async def cancle_order(ctx: commands.context.Context, id: int):
-        # TODO Error check: if ID exists
-        orderCtrl.delete_order(id)
-        reponse = f'**Orders with ID: {id} was canceled.**'
+        try:
+            if not orderCtrl.check_order_id(id, ctx.guild):
+                raise errors.OrderError
+
+            orderCtrl.delete_order(id)
+            reponse = f'**Orders with ID: {id} was canceled.**'
+        except errors.OrderError:
+            reponse = f'**Orders with ID: {id} does not exist! Please make sure the ID is correct.**'
         await ctx.send(reponse)
 
     @bot.command(name='adduser',
