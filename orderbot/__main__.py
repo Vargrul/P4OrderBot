@@ -1,13 +1,14 @@
+from typing import List, Pattern, Tuple
 from discord.ext.commands.errors import MemberNotFound
 import os
 import discord
-from dotenv import load_dotenv, main
+from dotenv import load_dotenv
 from discord.ext import commands
 import re
 from pathlib import Path
 
-from orderbot.src.orderCtrl import OrderCtrl
 from orderbot.src.userCtrl import UserCtrl
+from orderbot.src.orderCtrl import OrderCtrl
 import orderbot.src.errors as errors
 import orderbot.src.global_data as global_data
 import orderbot.src.webOrderParser as webOrderParser
@@ -24,6 +25,39 @@ def valid_link(url: str):
         r'(?:/?|[/?]\S+)$', re.IGNORECASE)
     
     return regex.search(url)
+
+def get_shorthand_regex(shorthand: str) -> Pattern:
+    shorthand = shorthand.strip()
+    if shorthand[0].isdigit():
+        regex = re.compile(
+            r'(\d+)\s*(\bSC\b|\bNF\b|\bIRD\b|\bOMA\b|\bBCN\b|\bSHPC\b|\bRCM\b|\bWM\b)\s*'
+            )
+    else:
+        regex = re.compile(
+            r'(\bSC\b|\bNF\b|\bIRD\b|\bOMA\b|\bBCN\b|\bSHPC\b|\bRCM\b|\bWM\b)\s*(\d+)\s*'
+            )
+    return regex
+
+def valid_shorthand_p4(shorthand: str) -> bool:
+    regex = get_shorthand_regex(shorthand)
+    
+    if len(regex.sub('', shorthand).strip()) == 0:
+        return True
+    else:
+        return False
+
+def extract_shorthand_p4(shorthand: str) -> Tuple[List[str], List[int]]:
+    regex = get_shorthand_regex(shorthand)
+    res = regex.findall(shorthand)
+
+    shorthand = shorthand.strip()
+    if shorthand[0].isdigit():
+        str_lst = [s[1] for s in res]
+        int_lst = [int(s[0]) for s in res]
+    else:
+        str_lst = [s[0] for s in res]
+        int_lst = [int(s[1]) for s in res]
+    return str_lst, int_lst
 
 def _init_misc():
     Path(Path(__file__).parent / "data/").mkdir(exist_ok=True)
@@ -69,12 +103,16 @@ def start_discord_bot():
             if not userCtrl.user_is_registered(ctx.author):
                 raise errors.ReqUserNotRegistered
         
+            
             if valid_link(arg):
                 item, count = webOrderParser.get_lsts_from_web_order(arg)
+            elif valid_shorthand_p4(arg):
+                item, count = extract_shorthand_p4(arg)
+                # count = re.findall(r'\d+', order)
+                # count = [int(c) for c in count]
+                # item = re.findall(r'[a-zA-Z]+', order)
             else:
-                count = re.findall(r'\d+', arg)
-                count = [int(c) for c in count]
-                item = re.findall(r'[a-zA-Z]+', arg)
+                raise errors.OrderInputError
 
             user = userCtrl.get_user_from_member(ctx.author)
             order = orderCtrl.add_order_from_lists(user, item, count, ctx.guild, ctx.channel)
@@ -84,6 +122,8 @@ def start_discord_bot():
             
         except errors.ReqUserNotRegistered:
             response = f"User **{ctx.author.display_name}** is not registered to make buy orders."
+        except errors.OrderInputError:
+            response = 'The order input could not be parsed. Please make sure there is no errors in the order. Otherwise contact Neorim#0099'
 
         await ctx.send(response)
 
@@ -91,7 +131,7 @@ def start_discord_bot():
         brief=help_strs.FILL_BRIEF_STR,
         usage=help_strs.FILL_USAGE_STR,
         help=help_strs.FILL_HELP_STR)
-    async def fill_order(ctx: commands.context.Context, in_identifier_args, order: str):
+    async def fill_order(ctx: commands.context.Context, in_identifier_args, *, order: str):
         try:
             found_maching_user = False
             try:
@@ -122,12 +162,13 @@ def start_discord_bot():
             
             if valid_link(order):
                 item, count = webOrderParser.get_lsts_from_web_order(order)
+            elif valid_shorthand_p4(order):
+                item, count = extract_shorthand_p4(order)
+                # count = re.findall(r'\d+', order)
+                # count = [int(c) for c in count]
+                # item = re.findall(r'[a-zA-Z]+', order)
             else:
-                count = re.findall(r'\d+', order)
-                count = [int(c) for c in count]
-                item = re.findall(r'[a-zA-Z]+', order)
-
-
+                raise errors.OrderInputError
 
             orderCtrl.fill_order_from_lists(user, item, count)
             response = '**Orders was filled.**\n\n'
@@ -138,6 +179,8 @@ def start_discord_bot():
             response = 'Invalid identifier, make sure it was spelled corretly and the user exits.'
         except errors.OrderError:
             response = 'User does not have any orders.'
+        except errors.OrderInputError:
+            response = 'The order input could not be parsed. Please make sure there is no errors in the order. Otherwise contact Neorim#0099'
         
         await ctx.send(response)
 
@@ -167,6 +210,7 @@ def start_discord_bot():
         usage=help_strs.CANCELBUY_USAGE_STR,
         help=help_strs.CANCELBUY_HELP_STR)
     async def cancle_order(ctx: commands.context.Context, id: int):
+        # TODO Error check: if ID exists
         orderCtrl.delete_order(id)
         reponse = f'**Orders with ID: {id} was canceled.**'
         await ctx.send(reponse)
@@ -228,5 +272,4 @@ def start_discord_bot():
     bot.run(TOKEN)
 
 if __name__ == "__main__":
-
     start_discord_bot()

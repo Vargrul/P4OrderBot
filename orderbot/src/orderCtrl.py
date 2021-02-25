@@ -3,7 +3,7 @@ from orderbot.src.order import Order
 from orderbot.src.user import User
 from orderbot.src.userCtrl import UserCtrl
 from orderbot.src.global_data import P4_ITEM_NAMES
-import orderbot.src.errors as errors
+# import orderbot.src.errors as errors
 from typing import List
 import pickle
 from discord import Guild, TextChannel
@@ -80,7 +80,7 @@ class OrderCtrl:
         # get orders from user
         order_nrs = []
         for i, o in enumerate(self.orders):
-            if o.user.discord_id == user.discord_id:
+            if o.user == user:
                 order_nrs.append(i)
 
         # must be able to do this better -.-

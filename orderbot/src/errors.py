@@ -1,4 +1,3 @@
-
 class UserError(Exception):
     pass
 
@@ -13,6 +12,9 @@ class UserIsNotRegistired(UserError):
 
 
 class OrderError(Exception):
+    pass
+
+class OrderInputError(Exception):
     pass
 
 class IdentifierError(Exception):

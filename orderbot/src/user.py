@@ -14,3 +14,6 @@ class User:
         self.discord_id = discord_id
         self.discord_name = discord_name
         self.discord_discriminator = discord_discriminator
+
+    def __eq__(self, o: object) -> bool:
+        return  isinstance(o, User) and self.discord_id == o.discord_id

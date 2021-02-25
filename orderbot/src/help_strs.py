@@ -13,7 +13,7 @@ BUY_HELP_STR = f"""Add a buy order.
     Examples:
     \t!buy https://janice.e-351.com/a/CaukRs
     \t!buy http://evepraisal.com/a/ykpgr
-    \t!buy 234 SC 184 NF 100 IRD 184 OMA 53 BN 53 SHPC 53 RCM 40 WM"""
+    \t!buy 234 SC 184 NF 100 IRD 184 OMA 53 BCN 53 SHPC 53 RCM 40 WM"""
 
 FILL_BRIEF_STR = f"Fill a buy order"
 FILL_USAGE_STR = f'{identify_str} <(link|amount shorthand)>'
@@ -27,7 +27,7 @@ FILL_HELP_STR = f"""Fill a buy order.
     \t!fill Neo http://evepraisal.com/a/ykpgr
     \t!fill @Neorim http://evepraisal.com/a/ykpgr
     \t!fill Neorim#0099 http://evepraisal.com/a/ykpgr
-    \t!fill 14 234 SC 184 NF 100 IRD 184 OMA 53 BN 53 SHPC 53 RCM 40 WM"""
+    \t!fill 14 234 SC 184 NF 100 IRD 184 OMA 53 BCN 53 SHPC 53 RCM 40 WM"""
 
 CANCELFILL_BRIEF_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_USAGE_STR = f"NOT YET IMPLEMENTED"
