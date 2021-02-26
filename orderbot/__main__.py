@@ -202,9 +202,13 @@ def start_discord_bot():
         help=help_strs.LIST_HELP_STR)
     async def list_order(ctx: commands.context.Context):
         # TODO Redo the response for better discord output
-        response = "***Current outstanding orders:***\n"
-        for o in orderCtrl.get_orders(ctx.guild):
-            response = response + o.to_discord_string()
+        response = "***Current outstanding orders:***"
+        orders = orderCtrl.get_orders(ctx.guild)
+        if len(orders) == 0:
+            response = response + f" __***None***__"
+        else:
+            for o in orders:
+                response = response + f'\n' + o.to_discord_string()
             
         await ctx.send(response)
 

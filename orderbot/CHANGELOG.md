@@ -1,6 +1,7 @@
 ## Unreleased
 ### Added
-- Commands are now case insensitive
+- Commands are now case insensitive.
+- the !list command will now display a better message if there are no orders.
 
 ## [0.1b1] 
 ### Added
