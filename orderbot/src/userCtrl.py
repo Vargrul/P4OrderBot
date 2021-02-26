@@ -44,7 +44,7 @@ class UserCtrl:
     # TODO Make these functions in to one
     def get_user_by_alias(self, alias: str) -> User:
         for user in self.users:
-            if user.alias == alias:
+            if user.alias.lower() == alias.lower():
                 return user
     
     def get_user_by_id(self, user_id: int) -> User:

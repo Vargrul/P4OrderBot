@@ -109,8 +109,8 @@ def start_discord_bot():
             
             if valid_link(arg):
                 item, count = webOrderParser.get_lsts_from_web_order(arg)
-            elif valid_shorthand_p4(arg):
-                item, count = extract_shorthand_p4(arg)
+            elif valid_shorthand_p4(arg.upper()):
+                item, count = extract_shorthand_p4(arg.upper())
                 # count = re.findall(r'\d+', order)
                 # count = [int(c) for c in count]
                 # item = re.findall(r'[a-zA-Z]+', order)
@@ -149,7 +149,7 @@ def start_discord_bot():
                             found_maching_user = True
                             break
                     else:
-                        if user.alias == in_identifier_args:
+                        if user.alias.lower() == in_identifier_args.lower():
                             user = userCtrl.get_user_by_alias(in_identifier_args)
                             found_maching_user = True
                             break
@@ -165,8 +165,8 @@ def start_discord_bot():
             
             if valid_link(order):
                 item, count = webOrderParser.get_lsts_from_web_order(order)
-            elif valid_shorthand_p4(order):
-                item, count = extract_shorthand_p4(order)
+            elif valid_shorthand_p4(order.upper()):
+                item, count = extract_shorthand_p4(order.upper())
                 # count = re.findall(r'\d+', order)
                 # count = [int(c) for c in count]
                 # item = re.findall(r'[a-zA-Z]+', order)

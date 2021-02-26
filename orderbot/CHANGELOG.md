@@ -1,9 +1,11 @@
 ## Unreleased
-### Added
-- Commands are now case insensitive.
-- the !list command will now display a better message if there are no orders.
-
 ### Changed
+- Commands are now case insensitive.
+- PI shorthand are now case insensitive
+- the !list command will now display a better message if there are no orders.
+- The alias for !fill identifier is now case insensitive.
+
+### Fixed
 - Fixed an typo in the shorthand error message.
 
 ## [0.1b1] - 2021-02-26
