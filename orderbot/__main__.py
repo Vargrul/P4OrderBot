@@ -126,7 +126,7 @@ def start_discord_bot():
         except errors.ReqUserNotRegistered:
             response = f"User **{ctx.author.display_name}** is not registered to make buy orders."
         except errors.OrderInputError:
-            response = 'The order input could not be parsed. Please make sure there is no errors in the order. Otherwise contact Neorim#0099'
+            response = 'The order input could not be parsed. Please make sure there are no errors in the order. Otherwise contact Neorim#0099'
 
         await ctx.send(response)
 
@@ -183,7 +183,7 @@ def start_discord_bot():
         except errors.OrderError:
             response = 'User does not have any orders.'
         except errors.OrderInputError:
-            response = 'The order input could not be parsed. Please make sure there is no errors in the order. Otherwise contact Neorim#0099'
+            response = 'The order input could not be parsed. Please make sure there are no errors in the order. Otherwise contact Neorim#0099'
         
         await ctx.send(response)
 
