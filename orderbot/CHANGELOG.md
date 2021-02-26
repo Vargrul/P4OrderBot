@@ -1,3 +1,7 @@
+## Unreleased
+### Added
+- Commands are now case insensitive
+
 ## [0.1b1] 
 ### Added
 - Initial Release for the versioned OrderBot.

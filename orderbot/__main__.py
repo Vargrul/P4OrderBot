@@ -85,7 +85,7 @@ def start_discord_bot():
     intents = discord.Intents.default()
     # intents.members = True
 
-    bot = commands.Bot(command_prefix='!', description=description, intents=intents)
+    bot = commands.Bot(command_prefix='!', description=description, intents=intents, case_insensitive=True)
 
     @bot.event
     async def on_ready():    
