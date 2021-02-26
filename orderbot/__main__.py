@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 import re
 from pathlib import Path
+import importlib.resources as pkg_resources
 
 from orderbot.src.userCtrl import UserCtrl
 from orderbot.src.orderCtrl import OrderCtrl
@@ -14,6 +15,7 @@ import orderbot.src.errors as errors
 import orderbot.src.global_data as global_data
 import orderbot.src.webOrderParser as webOrderParser
 import orderbot.src.help_strs as help_strs
+from orderbot import __version__
 
 def valid_link(url: str):
     # validate web page test
@@ -273,6 +275,17 @@ def start_discord_bot():
                 f'{"Priority: ":21}**{u.priority}**\n'
                 f'{"Desciption: ":17}*{u.disc}*\n\n'
                 )
+        await ctx.send(response)
+
+    @bot.command(name='version',
+        brief=help_strs.VERSION_BRIEF_STR,
+        usage=help_strs.VERSION_USAGE_STR,
+        help=help_strs.VERSION_HELP_STR)
+    async def cmd_version(ctx: commands.context.Context):
+        response = (f"Bot version: {__version__}\n")
+        response = response + f"```"
+        response = response + pkg_resources.read_text(__package__, 'CHANGELOG.md')
+        response = response + f"```"
         await ctx.send(response)
 
     bot.run(TOKEN)

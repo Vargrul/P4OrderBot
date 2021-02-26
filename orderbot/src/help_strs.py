@@ -89,3 +89,10 @@ LISTUSERS_HELP_STR = f"""List all user capable of creating buy orders
     Example:
     \t!listusers
     """
+VERSION_BRIEF_STR = f"Display the bot version and changelog"
+VERSION_USAGE_STR = f""
+VERSION_HELP_STR = f"""Display the bot version and changelog
+
+    Example:
+    \t!listusers
+    """
