@@ -62,6 +62,17 @@ def extract_shorthand_p4(shorthand: str) -> Tuple[List[str], List[int]]:
         int_lst = [int(s[1]) for s in res]
     return str_lst, int_lst
 
+def extract_invalid_part_shorthand_p4(shorthand: str) -> str:
+    regex = get_shorthand_regex(shorthand)
+    return regex.sub('', shorthand).strip()
+
+def any_part_valid_shorthand_p4(shorthand: str) -> bool:
+    shorthand = shorthand.strip()
+    if len(extract_invalid_part_shorthand_p4(shorthand)) < len(shorthand):
+        return True
+    else:
+        return False
+
 def _init_misc():
     Path(Path(__file__).parent / "data/").mkdir(exist_ok=True)
 
@@ -109,11 +120,11 @@ def start_discord_bot():
             
             if valid_link(arg):
                 item, count = webOrderParser.get_lsts_from_web_order(arg)
-            elif valid_shorthand_p4(arg.upper()):
-                item, count = extract_shorthand_p4(arg.upper())
-                # count = re.findall(r'\d+', order)
-                # count = [int(c) for c in count]
-                # item = re.findall(r'[a-zA-Z]+', order)
+            elif any_part_valid_shorthand_p4(arg.upper()):
+                if valid_shorthand_p4(arg.upper()):
+                    item, count = extract_shorthand_p4(arg.upper())
+                else:
+                    raise errors.OrderShorthandInputError
             else:
                 raise errors.OrderInputError
 
@@ -127,6 +138,10 @@ def start_discord_bot():
             response = f"User **{ctx.author.display_name}** is not registered to make buy orders."
         except errors.OrderInputError:
             response = 'The order input could not be parsed. Please make sure there are no errors in the order. Otherwise contact Neorim#0099'
+        except errors.OrderShorthandInputError:
+            response = f'There was an error in the P4 shorthand\nThe erroneous part was:```'
+            response = response + extract_invalid_part_shorthand_p4(arg.upper())
+            response = response + f"```"
 
         await ctx.send(response)
 
@@ -165,11 +180,11 @@ def start_discord_bot():
             
             if valid_link(order):
                 item, count = webOrderParser.get_lsts_from_web_order(order)
-            elif valid_shorthand_p4(order.upper()):
-                item, count = extract_shorthand_p4(order.upper())
-                # count = re.findall(r'\d+', order)
-                # count = [int(c) for c in count]
-                # item = re.findall(r'[a-zA-Z]+', order)
+            elif any_part_valid_shorthand_p4(order.upper()):
+                if valid_shorthand_p4(order.upper()):
+                    item, count = extract_shorthand_p4(order.upper())
+                else:
+                    raise errors.OrderShorthandInputError
             else:
                 raise errors.OrderInputError
 
@@ -179,12 +194,16 @@ def start_discord_bot():
             await list_order(ctx)
             return
         except errors.IdentifierError:
-            response = 'Invalid identifier, make sure it was spelled corretly and the user exits.'
+            response = 'Invalid identifier, make sure it was spelled correctly and the user exits.'
         except errors.OrderError:
             response = 'User does not have any orders.'
         except errors.OrderInputError:
             response = 'The order input could not be parsed. Please make sure there are no errors in the order. Otherwise contact Neorim#0099'
-        
+        except errors.OrderShorthandInputError:
+            response = f'There was an error in the P4 shorthand\nThe erroneous part was:```'
+            response = response + extract_invalid_part_shorthand_p4(order.upper())
+            response = response + f"```"
+
         await ctx.send(response)
 
 
@@ -243,7 +262,7 @@ def start_discord_bot():
                 f"Desctiption: *{userCtrl.users[-1].disc}*"
                 )
         except errors.ReqUserNotRegistered:
-            response = f"Could not add **{member.display_name}**, as you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
+            response = f"Could not add **{member.display_name}**, as you are not registered.\nUse the command: `!listusers` to see who can add a user."
         except errors.UserAlreadyRegistired:
             response = f"The user: **{member.display_name}** is already a registered user."
 
@@ -259,7 +278,7 @@ def start_discord_bot():
             userCtrl.remove_user(member, ctx.author)
             response = f"Removed user: **{member.display_name}**"
         except errors.ReqUserNotRegistered:
-            response = f"Could not remove **{member.display_name}** you are not reqistered.\nUse the command: `!listusers` to see who can add a user."
+            response = f"Could not remove **{member.display_name}** you are not registered.\nUse the command: `!listusers` to see who can add a user."
         except errors.UserIsNotRegistired:
             response = f"Could not find user.\nPlease check the username is correct."
             

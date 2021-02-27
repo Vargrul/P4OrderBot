@@ -17,5 +17,8 @@ class OrderError(Exception):
 class OrderInputError(Exception):
     pass
 
+class OrderShorthandInputError(Exception):
+    pass
+
 class IdentifierError(Exception):
     pass

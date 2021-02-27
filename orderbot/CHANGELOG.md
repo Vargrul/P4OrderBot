@@ -4,6 +4,7 @@
 - PI shorthand are now case insensitive
 - the !list command will now display a better message if there are no orders.
 - The alias for !fill identifier is now case insensitive.
+- An error in P4 shorthand will now return the error part to the author.
 
 ### Fixed
 - Fixed an typo in the shorthand error message.
