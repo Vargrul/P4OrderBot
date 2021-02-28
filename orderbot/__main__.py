@@ -99,15 +99,25 @@ def start_discord_bot():
     bot = commands.Bot(command_prefix='!', description=description, intents=intents, case_insensitive=True)
 
     @bot.event
-    async def on_ready():    
+    async def on_command_error(ctx: commands.context.Context, exc: Exception):
+        response = f"The command was not found.\nPlease check the spelling or try !help for all the commands."
+        await ctx.send(response)
+
+    @bot.event
+    async def on_ready():
         print('Logged in as')
         print(bot.user.name)
         print(bot.user.id)
         print('Active Guilds:')
         [print(g.name) for g in bot.guilds]
+        # for g in bot.guilds:
+        #     for c in g.text_channels:
+        #         try:
+        #             await c.send("I'm back online :smile:")
+        #         except:
+        #             pass
         print('------')
 
-    # TODO Handle variable arg length (both a single long string and cut up)
     @bot.command(name='buy', 
         brief=help_strs.BUY_BRIEF_STR, 
         usage=help_strs.BUY_USAGE_STR, 
