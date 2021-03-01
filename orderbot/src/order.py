@@ -1,6 +1,5 @@
 from datetime import datetime
 from orderbot.src.user import User
-from orderbot.src.userCtrl import UserCtrl
 from orderbot.src.item import Item
 import orderbot.src.global_data as global_data
 from typing import List
