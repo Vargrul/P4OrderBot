@@ -1,4 +1,4 @@
-## Unreleased
+## [0.1b2] - 2021-03-08
 ### Added
 - !fill command now gives and error is the order would be over filled
 - !fill command can now be used without amount and filled whatever is needed. An error for the entire input will be produced if one or more input item is not needed.
