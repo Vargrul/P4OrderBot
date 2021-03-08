@@ -23,7 +23,7 @@ FILL_HELP_STR = f"""Fill a buy order.
     {'<(link|amount shorthand)>':20} - The argument for the command can be an appraisal link form either janice.e-351.com/ or http://evepraisal.com/, alternatively a text string of amount follow by shorthand.
 
     Examples:
-    \t!fill Neorim" https://janice.e-351.com/a/CaukRs
+    \t!fill "Neorim" https://janice.e-351.com/a/CaukRs
     \t!fill Neo http://evepraisal.com/a/ykpgr
     \t!fill @Neorim http://evepraisal.com/a/ykpgr
     \t!fill Neorim#0099 http://evepraisal.com/a/ykpgr
@@ -33,9 +33,17 @@ CANCELFILL_BRIEF_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_USAGE_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_HELP_STR = f"NOT YET IMPLEMENTED"
 
-LIST_BRIEF_STR = f"List all buy orders"
+LIST_BRIEF_STR = f"List totaled items wanted per buyer"
 LIST_USAGE_STR = f""
-LIST_HELP_STR = f"""List all the current ourstanding buy orders.
+LIST_HELP_STR = f"""List all the current ourstanding items per buyer.
+
+    Examples:
+    \t!list
+    """
+
+LISTORDERS_BRIEF_STR = f"List all buy orders"
+LISTORDERS_USAGE_STR = f""
+LISTORDERS_HELP_STR = f"""List all the current ourstanding buy orders.
 
     Examples:
     \t!list

@@ -1,6 +1,5 @@
 from datetime import datetime
 from orderbot.src.user import User
-from orderbot.src.userCtrl import UserCtrl
 from orderbot.src.item import Item
 import orderbot.src.global_data as global_data
 from typing import List
@@ -8,7 +7,7 @@ from typing import List
 class Order:
     def __init__(self, user: User, items: List[Item] = None, date: datetime = datetime.now(), id: int = None, guild_id: int = None, guild_name: str = None, channel_id: int = None, channel_name: str = None):
         self.user: User = user
-        self.items: Item = items
+        self.items: List[Item] = items
         self.date: datetime = date
         if id is None:
             self.id: int = global_data.get_new_order_id()

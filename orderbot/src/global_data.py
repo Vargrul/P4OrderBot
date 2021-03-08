@@ -1,4 +1,5 @@
 import pickle
+from enum import Enum, auto
 
 P4_ITEM_NAMES = [
     ['Broadcast Node', 'BCN'],
@@ -10,6 +11,15 @@ P4_ITEM_NAMES = [
     ['Sterile Conduits', 'SC'],
     ['Wetware Mainframe', 'WM']
     ]
+
+class FILL_INPUT_TYPE(Enum):
+    ID_AND_LINK = auto()
+    ID_AND_SHORTHAND = auto()
+    ID_AND_P4TYPE = auto()
+    ONLY_LINK = auto()
+    ONLY_SHORTHAND = auto()
+    ONLY_P4TYPE = auto()
+
 order_id_counter = 0
 user_id_counter = 0
 
