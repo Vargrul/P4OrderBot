@@ -96,7 +96,12 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
                     raise errors.OrderError
 
             elif input_type == FILL_INPUT_TYPE.ONLY_LINK or input_type == FILL_INPUT_TYPE.ONLY_SHORTHAND or input_type == FILL_INPUT_TYPE.ONLY_P4TYPE:
-                if len(guild_orders) != 1:
+                unique_active_buyers = []
+                for o in orderCtrl.get_orders(guild=ctx.guild):
+                    if not o.user.id in unique_active_buyers:
+                        unique_active_buyers.append(o.user.id)
+
+                if len(unique_active_buyers) != 1:
                     raise errors.OrderMoreThanOneError
 
                 user = guild_orders[0].user
@@ -115,7 +120,7 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
                 response = response + (f'{item.count:7} - {item.name:25}\n')
             response = response + f'```'
             await ctx.send(response)
-            await self.list_order(ctx)
+            await self.list_totals(ctx)
             return
         except errors.IdentifierError:
             response = 'Invalid identifier, make sure it was spelled correctly and the user exits.'
@@ -124,7 +129,7 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
         except errors.OrderNonAvailableError:
             response = 'There are no active orders.'
         except errors.OrderMoreThanOneError:
-            response = 'There are more than one order, please add an ID.'
+            response = 'There are more than one user with orders, please add an ID.'
         except errors.ItemOverFillError as e:
             response = f'***Error:*** The items in the order would be overfilled with the following items:```css\n'
             for item in e.item:
@@ -156,16 +161,16 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
         brief=help_strs.LIST_BRIEF_STR,
         usage=help_strs.LIST_USAGE_STR,
         help=help_strs.LIST_HELP_STR)
+    async def list_totals(self, ctx: commands.context.Context):
+        response = cog_orders_functions.list_response(ctx)
+        await ctx.send(response)
+
+    @commands.command(name='listorders',
+        brief=help_strs.LIST_BRIEF_STR,
+        usage=help_strs.LIST_USAGE_STR,
+        help=help_strs.LIST_HELP_STR)
     async def list_order(self, ctx: commands.context.Context):
-        # TODO Redo the response for better discord output
-        response = "***Current outstanding orders:***"
-        orders = orderCtrl.get_orders(ctx.guild)
-        if len(orders) == 0:
-            response = response + f" __***None***__"
-        else:
-            for o in orders:
-                response = response + f'\n' + o.to_discord_string()
-            
+        response = cog_orders_functions.listorders_response(ctx)
         await ctx.send(response)
 
     @commands.command(name='cancelbuy',

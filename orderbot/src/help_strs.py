@@ -33,9 +33,17 @@ CANCELFILL_BRIEF_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_USAGE_STR = f"NOT YET IMPLEMENTED"
 CANCELFILL_HELP_STR = f"NOT YET IMPLEMENTED"
 
-LIST_BRIEF_STR = f"List all buy orders"
+LIST_BRIEF_STR = f"List totaled items wanted per buyer"
 LIST_USAGE_STR = f""
-LIST_HELP_STR = f"""List all the current ourstanding buy orders.
+LIST_HELP_STR = f"""List all the current ourstanding items per buyer.
+
+    Examples:
+    \t!list
+    """
+
+LISTORDERS_BRIEF_STR = f"List all buy orders"
+LISTORDERS_USAGE_STR = f""
+LISTORDERS_HELP_STR = f"""List all the current ourstanding buy orders.
 
     Examples:
     \t!list
