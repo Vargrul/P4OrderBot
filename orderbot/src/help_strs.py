@@ -23,7 +23,7 @@ FILL_HELP_STR = f"""Fill a buy order.
     {'<(link|amount shorthand)>':20} - The argument for the command can be an appraisal link form either janice.e-351.com/ or http://evepraisal.com/, alternatively a text string of amount follow by shorthand.
 
     Examples:
-    \t!fill Neorim" https://janice.e-351.com/a/CaukRs
+    \t!fill "Neorim" https://janice.e-351.com/a/CaukRs
     \t!fill Neo http://evepraisal.com/a/ykpgr
     \t!fill @Neorim http://evepraisal.com/a/ykpgr
     \t!fill Neorim#0099 http://evepraisal.com/a/ykpgr

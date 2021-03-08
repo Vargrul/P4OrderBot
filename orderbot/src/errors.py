@@ -1,3 +1,7 @@
+from typing import List
+from orderbot.src.item import Item
+
+
 class UserError(Exception):
     pass
 
@@ -14,7 +18,13 @@ class UserIsNotRegistired(UserError):
 class OrderError(Exception):
     pass
 
+class OrderNonAvailableError(Exception):
+    pass
+
 class OrderInputError(Exception):
+    pass
+
+class OrderMoreThanOneError(Exception):
     pass
 
 class OrderShorthandInputError(Exception):
@@ -22,3 +32,11 @@ class OrderShorthandInputError(Exception):
 
 class IdentifierError(Exception):
     pass
+
+class ItemOverFillError(Exception):
+    def __init__(self, item):
+        self.item: List[Item] = item
+
+class ItemNotNeededError(Exception):
+    def __init__(self, item):
+        self.item: List[Item] = item

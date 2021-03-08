@@ -1,5 +1,5 @@
 from orderbot.src.global_data import get_new_user_id
-import requests as re
+import requests
 from html.parser import HTMLParser
 import numpy as np
 from typing import Tuple
@@ -26,7 +26,7 @@ class OrderHtmlParser(HTMLParser):
         return name, count
 
 def get_lsts_from_web_order(web_order_addr) -> Tuple[str, int]:
-    req = re.get(web_order_addr)
+    req = requests.get(web_order_addr)
     orderHtmlParser = OrderHtmlParser()
     orderHtmlParser.feed(req.text)
 

@@ -1,18 +1,33 @@
 import re
 from typing import List, Pattern, Tuple
 
-def valid_link(url: str):
-    # validate web page test
-    regex = re.compile(
-        r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-        r'localhost|' #localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
-    
-    return regex.search(url)
+import orderbot.src.regexes as regexes
 
+def valid_id_and_link(arg: str):
+    regex = regexes.regex_id_and_link()
+    return regex.search(arg)
+
+def valid_link(arg: str):
+    regex = regexes.regex_link_only()    
+    return regex.search(arg)
+
+def valid_id_and_shorthand(arg: str):
+    regex = regexes.regex_id_and_shorthand()
+    return regex.search(arg)
+
+def valid_shorthand(arg: str):
+    regex = regexes.regex_shorthand_only()
+    return regex.search(arg)
+
+def valid_id_and_p4type(arg: str):
+    regex = regexes.regex_id_and_p4type()
+    return regex.search(arg)
+
+def valid_p4type(arg: str):
+    regex = regexes.regex_p4types_only()
+    return regex.search(arg)
+
+# TODO fix this - Should not be needed
 def get_shorthand_regex(shorthand: str) -> Pattern:
     shorthand = shorthand.strip()
     if shorthand[0].isdigit():
