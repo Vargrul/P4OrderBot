@@ -13,3 +13,9 @@ class Item:
     def __str__(self) -> str:
         retStr = f'{self.name} \t {self.count}'
         return retStr
+
+    def __repr__(self) -> str:
+        return f'Item({self.name}, {self.count})'
+
+    def __eq__(self, o: object) -> bool:
+        return o.name == self.name

@@ -1,7 +1,13 @@
+import discord
+from discord import guild
+from discord.ext.commands.context import Context
+from discord.utils import SequenceProxy
 from orderbot.src.global_data import FILL_INPUT_TYPE
 import orderbot.src.validators as validators
 import orderbot.src.regexes as regexes
 import orderbot.src.webOrderParser as webOrderParser
+import orderbot.src.orderCtrl as orderCtrl
+import orderbot.src.userCtrl as userCtrl
 
 def input_parser_fill(arg_str: str):
     input_type = None
@@ -9,20 +15,20 @@ def input_parser_fill(arg_str: str):
         input_type = FILL_INPUT_TYPE.ID_AND_LINK
         output_data = regexes.regex_id_and_link().match(arg_str).groups()
         output_data = (output_data[0].replace('\"', ''), output_data[1])
-    elif validators.valid_link(arg_str):
-        input_type = FILL_INPUT_TYPE.ONLY_LINK
-        output_data = arg_str
     elif validators.valid_id_and_shorthand(arg_str):
         input_type = FILL_INPUT_TYPE.ID_AND_SHORTHAND
         output_data = regexes.regex_id_and_shorthand().match(arg_str).groups()
         output_data = (output_data[0].replace('\"', ''), output_data[1])
-    elif validators.valid_shorthand(arg_str):
-        input_type = FILL_INPUT_TYPE.ONLY_SHORTHAND
-        output_data = arg_str
     elif validators.valid_id_and_p4type(arg_str):
         input_type = FILL_INPUT_TYPE.ID_AND_P4TYPE
         output_data = regexes.regex_id_and_p4type().match(arg_str).groups()
         output_data = (output_data[0].replace('\"', ''), output_data[1])
+    elif validators.valid_link(arg_str):
+        input_type = FILL_INPUT_TYPE.ONLY_LINK
+        output_data = arg_str
+    elif validators.valid_shorthand(arg_str):
+        input_type = FILL_INPUT_TYPE.ONLY_SHORTHAND
+        output_data = arg_str
     elif validators.valid_p4type(arg_str):
         input_type = FILL_INPUT_TYPE.ONLY_P4TYPE
         output_data = arg_str
@@ -56,3 +62,23 @@ def input_extractor_fill(input_type: FILL_INPUT_TYPE, data: str):
         remainder = ''
 
     return shorthand, count, remainder
+
+
+def list_response(ctx: Context) -> str:
+    response = "**Current** ***TOTAL*** ** items wanted per buyer:**\n"
+
+    for user in userCtrl.users:
+        if len(orderCtrl.get_orders(guild=ctx.guild, user=user)) != 0:
+            response = response + orderCtrl.user_total_orders_to_discord_string(user, guild=ctx.guild)
+            response = response + f'\n'
+    
+    return response
+
+def listorders_response(ctx: Context) -> str:
+    orders = orderCtrl.get_orders(guild=ctx.guild)
+
+    response = f'**Current outstanding orders:**\n'
+    for o in orders:
+        response = response + o.to_discord_string() + f'\n'
+
+    return response

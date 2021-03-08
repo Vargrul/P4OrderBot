@@ -1,4 +1,7 @@
+import re
 import discord
+import copy
+from discord.channel import CategoryChannel
 import orderbot.src.errors as errors
 from orderbot.src.item import Item
 from orderbot.src.order import Order
@@ -11,19 +14,54 @@ from discord import Guild, TextChannel
 
 __orders: Tuple[Order] = []
 
-def get_orders(guild: Guild=None, channel: TextChannel=None) -> List[Order]:
+def get_orders(guild: Guild=None, channel: TextChannel=None, user: User=None) -> List[Order]:
+    # Get list of all orders
+    return_orders = __orders
+    
+    # Begin to filter the results down depending on the input to the function
     if guild != None:
-        if channel != None:
-            return [o for o in __orders if o.channel_id == channel.id and o.guild_id == guild.id]
-        else:
-            return [o for o in __orders if o.guild_id == guild.id]
+        return_orders = [o for o in return_orders if o.guild_id == guild.id]
 
-    return __orders
+    if channel != None:
+        return_orders = [o for o in return_orders if o.channel_id == channel.id]
+
+    if user != None:
+        return_orders = [o for o in return_orders if o.user.id == user.id]
+
+    return return_orders
 
 def add_order(order: Order):
     __orders.append(order)
     save_orders()
     pass
+
+def user_total_orders_to_discord_string(user: User, guild: Guild=None, channel: TextChannel=None) -> str:
+    user_orders = get_orders(guild = guild, channel = channel, user = user)
+
+    response = (
+        f'Issuer: **{user.name}** Alias: **{user.alias}**\n'
+        f'User ID: **{user.id}**\n')
+
+    if len(user_orders) == 0:
+        response = response + f" __***None***__"
+    else:
+        # Need copy of items to not change the orders
+        items = [copy.copy(i) for i in user_orders[0].items]
+        if len(user_orders) > 1:
+            for o in user_orders[1:]:
+                for idx, i in enumerate(items):
+                    for oi in o.items:
+                        if i.name == oi.name:
+                            items[idx].count = items[idx].count + oi.count
+                            break
+        
+        
+        response = response + f'```css\n'
+        for i in items:
+            response = response + (f'{i.count:7} - {i.name:25}\n')
+        response = response + f'```'
+
+    return response
 
 # TODO Going to be obsolete
 def add_order_from_items(user: User, items: List[Item], guild: Guild, channel: TextChannel) -> Order:
@@ -61,8 +99,7 @@ def delete_order( order_id):
     
     save_orders()
 
-# Gives error if not needed
-# - (Secondary) Take Partial??
+
 # First in -> First out
 # TODO Going to refactored to using Order as input
 def fill_order( user: User, in_items: List[Item]) -> Tuple[Item]:
@@ -95,34 +132,41 @@ def fill_order( user: User, in_items: List[Item]) -> Tuple[Item]:
                 elif i_item.count != None:
                     if i_item.count > n_item.count:
                         item_overfill.append(i_item)
-
                 break
 
     if len(item_overfill) != 0:
         raise errors.ItemOverFillError(item_overfill)
     if len(item_not_needed) != 0:
-        raise errors.ItemNotNeededError(item_not_needed)           
+        raise errors.ItemNotNeededError(item_not_needed)
 
     # Fill orders
     for io in order_nrs:
         for i, order_item in enumerate(__orders[io].items):
             for in_i, in_item in enumerate(in_items):
-                if in_item.name == order_item.name:
-                    if in_item.count == None and order_item.count != 0:
-                        items_filled.append(Item(order_item.name, order_item.count))
+                if in_item.name == order_item.name and order_item.count != 0:
+                    if in_item.count == None:
+                        if order_item not in items_filled:
+                            items_filled.append(Item(order_item.name, order_item.count))
+                        else:
+                            item = [item for item in items_filled if item.name == order_item.name][0]
+                            item.count = item.count + order_item.count
 
                         # Set in_item to 0 to show is was filled
-                        in_items[in_i].count = 0
-                        # Set order_item to 0 as it was filled completely
                         __orders[io].items[i].count = 0
+                        break
 
                     if in_item.count <= order_item.count and in_item.count != 0:
                         items_filled.append(Item(order_item.name, order_item.count))
 
                         __orders[io].items[i].count = __orders[io].items[i].count - in_items[in_i].count
                         in_items[in_i].count = 0
+                        break
 
-                    break
+
+    # Set all None types(complete fill) to 0 as everything possible have been filled.
+    for i in in_items:
+        if i.count == None:
+            i = 0
 
 
     # delete filled orders
@@ -131,55 +175,9 @@ def fill_order( user: User, in_items: List[Item]) -> Tuple[Item]:
         if not any([x.count for x in order.items]):
             orders_to_delete.append(i)
     
-    orders_to_delete.reverse()
+    orders_to_delete.sort(reverse=True)
     for del_nr in orders_to_delete:
         del __orders[del_nr]
-
-    # Does ONLY fill if the in items are <= the order_items
-    # must be able to do this better -.-
-    # for io in order_nrs:
-    #     for i, order_item in enumerate(__orders[io].items):
-    #         for in_i, in_item in enumerate(in_items):
-    #             if in_item.name == order_item.name:
-    #                 if in_item.count == None and order_item.count != 0:
-    #                     items_filled.append(Item(order_item.name, order_item.count))
-
-    #                     # Set in_item to 0 to show is was filled
-    #                     in_items[in_i].count = 0
-    #                     # Set order_item to 0 as it was filled completely
-    #                     __orders[io].items[i].count = 0
-
-    #                 elif (in_item.count == None and order_item.count == 0) \
-    #                     or (in_item.count != 0 and order_item.count == 0):
-    #                     item_not_needed.append(in_item)
-
-    #                 elif in_item.count <= order_item.count and in_item.count != 0:
-    #                     items_filled.append(Item(order_item.name, order_item.count))
-
-    #                     __orders[io].items[i].count = __orders[io].items[i].count - in_items[in_i].count
-    #                     in_items[in_i].count = 0
-
-    #                 elif in_item.count > order_item.count:
-    #                     item_overfill.append(in_item)
-
-    #                 break
-
-    #                 # elif in_item.count < order_item.count:
-    #                 #     __orders[io].items[i].count = __orders[io].items[i].count - in_items[in_i].count
-    #                 #     in_items[in_i].count = 0
-    #                 # else:
-    #                 #     in_items[in_i].count = in_items[in_i].count - __orders[io].items[i].count
-    #                 #     __orders[io].items[i].count = 0
-    #                 # break
-
-    # orders_to_delete = []
-    # for i, order in enumerate(__orders):
-    #     if not any([x.count for x in order.items]):
-    #         orders_to_delete.append(i)
-    
-    # orders_to_delete.reverse()
-    # for del_nr in orders_to_delete:
-    #     del __orders[del_nr]
         
     save_orders()
 
