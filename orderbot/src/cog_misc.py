@@ -16,6 +16,6 @@ class CogMiscCmds(commands.Cog, name="Misc Commands"):
     async def cmd_version(self, ctx: commands.context.Context):
         response = (f"Bot version: {__version__}\n")
         response = response + f"```"
-        response = response + pkg_resources.read_text(__package__, 'CHANGELOG.md')
+        response = response + pkg_resources.read_text('orderbot', 'CHANGELOG.md')
         response = response + f"```"
         await ctx.send(response)
