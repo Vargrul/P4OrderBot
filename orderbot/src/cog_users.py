@@ -1,7 +1,10 @@
+import re
 import discord
 from discord.ext import commands
 import orderbot.src.help_strs as help_strs
-import orderbot.src.userCtrl as userCtrl
+# import orderbot.src.user_ctrl as userCtrl
+import orderbot.src.database_ctrl as database_ctrl
+from orderbot.src.database_ctrl import User
 import orderbot.src.errors as errors
     
 class CogUserCmds(commands.Cog, name="User Commands"):
@@ -14,15 +17,22 @@ class CogUserCmds(commands.Cog, name="User Commands"):
         help=help_strs.ADDUSER_HELP_STR)
     async def add_user(self, ctx: commands.context.Context, member: discord.Member, alias: str, priority: int, disc: str):
         try:
-            userCtrl.add_user(member, ctx.author, alias=alias, priority=priority, discription=disc)
+            # Test if the requesting member us registered, or is there is NO users
+            if not database_ctrl.user_is_registered(discord_id = ctx.author.id) and not database_ctrl.table_is_empty(User):
+                raise errors.ReqUserNotRegistered
+            # Check if the user is already registered
+            elif database_ctrl.user_is_registered(discord_id = member.id):
+                raise errors.UserAlreadyRegistired
 
-            response = (
-                f"Added user **{userCtrl.users[-1].name}** "
-                f"(alias:**{userCtrl.users[-1].alias}**) with "
-                f"priority: **{userCtrl.users[-1].priority}** "
-                f"and ID: **{userCtrl.users[-1].id}**.\n"
-                f"Description: *{userCtrl.users[-1].disc}*"
-                )
+            database_ctrl.add_user(member, alias=alias, priority=priority, description=disc)
+            with database_ctrl.get_user(discord_id = member.id) as user:
+                response = (
+                    f"Added user **{user.name}** "
+                    f"(alias:**{user.alias}**) with "
+                    f"priority: **{user.priority}** "
+                    f"and ID: **{user.id}**.\n"
+                    f"Description: *{user.disc}*"
+                    )
         except errors.ReqUserNotRegistered:
             response = f"Could not add **{member.display_name}**, as you are not registered.\nUse the command: `!listusers` to see who can add a user."
         except errors.UserAlreadyRegistired:
@@ -37,7 +47,15 @@ class CogUserCmds(commands.Cog, name="User Commands"):
         help=help_strs.REMOVEUSER_HELP_STR)
     async def remove_user(self, ctx: commands.context.Context, *, member: discord.Member):
         try:
-            userCtrl.remove_user(member, ctx.author)
+            # Test if the requesting member us registered, or is there is NO users
+            if not database_ctrl.user_is_registered(discord_id = ctx.author.id):
+                raise errors.ReqUserNotRegistered
+            # Check if the user is already registered
+            elif not database_ctrl.user_is_registered(discord_id = member.id):
+                raise errors.UserIsNotRegistired
+
+            database_ctrl.delete_user(member)
+            # userCtrl.remove_user(member, ctx.author)
             response = f"Removed user: **{member.display_name}**"
         except errors.ReqUserNotRegistered:
             response = f"Could not remove **{member.display_name}** you are not registered.\nUse the command: `!listusers` to see who can add a user."
@@ -52,12 +70,18 @@ class CogUserCmds(commands.Cog, name="User Commands"):
         help=help_strs.LISTUSERS_HELP_STR)
     async def list_users(self, ctx: commands.context.Context):
         response = "***Current registered users(buyers):***\n"
-        for u in userCtrl.users:
-            response = response + (
-                f'{"Username: ":15}**{u.name}**\n'
-                f'{"Alias: ":22}**{u.alias}**\n'
-                f'{"ID: ":24}**{u.id}**\n'
-                f'{"Priority: ":21}**{u.priority}**\n'
-                f'{"Desciption: ":17}*{u.disc}*\n\n'
-                )
+        if not database_ctrl.table_is_empty(User):
+            with database_ctrl.get_user() as users:
+                if isinstance(users, User):
+                    users = [users]
+                for u in users:
+                    response = response + (
+                        f'{"Username: ":15}**{u.name}**\n'
+                        f'{"Alias: ":22}**{u.alias}**\n'
+                        f'{"ID: ":24}**{u.id}**\n'
+                        f'{"Priority: ":21}**{u.priority}**\n'
+                        f'{"Desciption: ":17}*{u.disc}*\n\n'
+                        )
+        else:
+            response = response + f'There are not users!\nAdd one ;)'
         await ctx.send(response)

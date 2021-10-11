@@ -1,15 +1,21 @@
 import re
-from orderbot.src.global_data import FILL_INPUT_TYPE
+
+import discord
+from discord.enums import Status
+from orderbot.src.global_data import FILL_INPUT_TYPE, P4ItemEnum
 from discord.ext import commands
 from discord.ext.commands.errors import MemberNotFound
 
 import orderbot.src.help_strs as help_strs
 import orderbot.src.errors as errors
-import orderbot.src.orderCtrl as orderCtrl
-import orderbot.src.userCtrl as userCtrl
+# import orderbot.src.order_ctrl as orderCtrl
+# import orderbot.src.user_ctrl as userCtrl
 import orderbot.src.validators as validators
-import orderbot.src.webOrderParser as webOrderParser
+import orderbot.src.web_order_parser as webOrderParser
 import orderbot.src.cog_orders_functions as cog_orders_functions
+import orderbot.src.database_ctrl as database_ctrl
+from orderbot.src.database_ctrl import Item, StatusEnum
+from sqlalchemy.orm import with_expression
 
 class CogOrderCmds(commands.Cog, name="Order Commands"):
     def __init__(self, bot) -> None:
@@ -21,8 +27,10 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
         help=help_strs.BUY_HELP_STR)
     async def add_order(self, ctx: commands.context.Context, *, arg: str):
         try:
-            if not userCtrl.user_is_registered(ctx.author):
+            if not database_ctrl.user_is_registered(discord_id = ctx.author.id):
                 raise errors.ReqUserNotRegistered
+            # if not userCtrl.user_is_registered(ctx.author):
+            #     raise errors.ReqUserNotRegistered
         
             
             if validators.valid_link(arg):
@@ -35,11 +43,14 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
             else:
                 raise errors.OrderInputError
 
-            user = userCtrl.get_user_from_member(ctx.author)
-            order = orderCtrl.add_order_from_lists(user, item, count, ctx.guild, ctx.channel)
+            # Create item list
+            items = []
+            for itm, cnt in zip(item, count):
+                items.append(Item.from_string_and_count(itm, cnt))
+            # Add new order
+            with database_ctrl.get_user(discord_id = ctx.author.id) as user:
+                order_id = database_ctrl.add_buy_order(user, ctx, items)
 
-            response = f"***The following buy order was added:***\n{order.to_discord_string()}"
-            # response = 'buy command\n' + order.to_discord_string()
             
         except errors.ReqUserNotRegistered:
             response = f"User **{ctx.author.display_name}** is not registered to make buy orders."
@@ -58,62 +69,44 @@ class CogOrderCmds(commands.Cog, name="Order Commands"):
         help=help_strs.FILL_HELP_STR)
     async def fill_order(self, ctx: commands.context.Context, *, args: str):
         try:
-            # get all orders
-            guild_orders = orderCtrl.get_orders(ctx.guild)
-            if len(guild_orders) == 0:
-                raise errors.OrderNonAvailableError
-
-            input_type, data = cog_orders_functions.input_parser_fill(args)
-            if input_type is None:
-                raise errors.OrderInputError
-
-            # Need to find the user in the ID, and if no id check for a single order only
-            if input_type == FILL_INPUT_TYPE.ID_AND_LINK or input_type == FILL_INPUT_TYPE.ID_AND_SHORTHAND or input_type == FILL_INPUT_TYPE.ID_AND_P4TYPE:
-                (data_id, data_str) = data
-                #  Find memberm either from discord tags etc. or from user ID or alias
-                found_maching_user = False
-                try:
-                    member = await commands.MemberConverter().convert(ctx, data_id)
-                    user = userCtrl.get_user_from_member(member)
-                    found_maching_user = True
-                except MemberNotFound:
-                    for user in userCtrl.users:
-                        if data_id.isdigit():
-                            if user.id == int(data_id):
-                                user = userCtrl.get_user_by_id(int(data_id))
-                                found_maching_user = True
-                                break
-                        else:
-                            if user.alias.lower() == data_id.lower():
-                                user = userCtrl.get_user_by_alias(data_id)
-                                found_maching_user = True
-                                break
-
-                if not found_maching_user:
-                    raise errors.IdentifierError
-                
-                if len([o for o in guild_orders if o.user == user]) == 0:
-                    raise errors.OrderError
-
-            elif input_type == FILL_INPUT_TYPE.ONLY_LINK or input_type == FILL_INPUT_TYPE.ONLY_SHORTHAND or input_type == FILL_INPUT_TYPE.ONLY_P4TYPE:
-                unique_active_buyers = []
-                for o in orderCtrl.get_orders(guild=ctx.guild):
-                    if not o.user.id in unique_active_buyers:
-                        unique_active_buyers.append(o.user.id)
-
-                if len(unique_active_buyers) != 1:
-                    raise errors.OrderMoreThanOneError
-
-                user = guild_orders[0].user
-                data_str = data
-
+            # Parse input args
+            buyer_user_id, input_type, data_str = await cog_orders_functions.parse_fill_arg(ctx, args)
+            # Extract data
             item, count, remainder = cog_orders_functions.input_extractor_fill(input_type, data_str)
 
             if remainder != '':
                 raise errors.OrderShorthandInputError
+
+            in_items = [Item.from_string_and_count(item, count) for item, count in zip(item, count)]
+
+            # Do error checking
+            # Concatenate all orders for the user for a Total needed list
+            with database_ctrl.get_user(id = buyer_user_id) as user:
+                needed_items_list = database_ctrl.total_items_wanted(user)
             
-            # Create order to fill with, not items. Needed for later order tracking etc.
-            filled_items = orderCtrl.fill_order_from_lists(user, item, count)
+            # Error checking
+            item_overfill = []
+            item_not_needed = []
+            for n_item in needed_items_list:
+                for i_item in in_items:
+                    if n_item.type == i_item.type:
+                        if(i_item.quantity == None and n_item.quantity == 0) or (i_item.quantity != 0 and n_item.quantity == 0):
+                            item_not_needed.append(i_item)
+                        elif i_item.quantity != None:
+                            if i_item.quantity > n_item.quantity:
+                                item_overfill.append(i_item)
+                        break
+
+            if len(item_overfill) != 0:
+                raise errors.ItemOverFillError(item_overfill)
+            if len(item_not_needed) != 0:
+                raise errors.ItemNotNeededError(item_not_needed)
+
+            # Add new sell order
+            #   This potentially need to be split in to smaller orders depending on the buying users orders as multiple can be filled at once.
+
+            
+
             response = '**Following items are accepted:**\n'
             response = response + f'```css\n'
             for item in filled_items:

@@ -1,5 +1,5 @@
 from typing import List
-from orderbot.src.item import Item
+from orderbot.src.database_ctrl import Item
 
 
 class UserError(Exception):

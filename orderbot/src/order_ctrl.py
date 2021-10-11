@@ -3,10 +3,10 @@ import discord
 import copy
 from discord.channel import CategoryChannel
 import orderbot.src.errors as errors
-from orderbot.src.item import Item
+from orderbot.src.database_ctrl import Item, User
 from orderbot.src.order import Order
-from orderbot.src.user import User
-from orderbot.src.global_data import P4_ITEM_NAMES
+
+from orderbot.src.global_data import P4_ITEM_ALIAS
 from typing import List, Tuple
 import pickle
 from discord import Guild, TextChannel
@@ -72,13 +72,13 @@ def add_order_from_items(user: User, items: List[Item], guild: Guild, channel: T
 # TODO Going to be obsolete
 def add_order_from_lists(user: User, name_lst: List[str], count_lst: List[int], guild: Guild, channel: TextChannel) -> Order:
     # add items not in order for completeness
-    for i_n in P4_ITEM_NAMES:
+    for i_n in P4_ITEM_ALIAS:
         if not any(e in i_n for e in name_lst):
             name_lst.append(i_n[0])
             count_lst.append(0)
     
     # change names to full names
-    for i_n in P4_ITEM_NAMES:
+    for i_n in P4_ITEM_ALIAS:
         for i, name in enumerate(name_lst):
             if name in i_n:
                 name_lst[i] = i_n[0]
@@ -112,7 +112,7 @@ def fill_order( user: User, in_items: List[Item]) -> Tuple[Item]:
 
     # Concatenate all orders for the user for a Total needed list
     needed_items_list: List[Item] = []
-    for i_name in [i[0] for i in P4_ITEM_NAMES]:
+    for i_name in [i[0] for i in P4_ITEM_ALIAS]:
         count = 0
         for io in order_nrs:
             for i, order_item in enumerate(__orders[io].items):
@@ -187,13 +187,13 @@ def fill_order( user: User, in_items: List[Item]) -> Tuple[Item]:
 # TODO Going to be obsolete
 def fill_order_from_lists( user: User, name_lst: List[str], count_lst: List[int]) -> Tuple[Item]:
     # REPEATED CODE! Should be in another funciton (same as add_order_from_lists())
-    for i_n in P4_ITEM_NAMES:
+    for i_n in P4_ITEM_ALIAS:
         if not any(e in i_n for e in name_lst):
             name_lst.append(i_n[0])
             count_lst.append(0)
     
     # change names to full names
-    for i_n in P4_ITEM_NAMES:
+    for i_n in P4_ITEM_ALIAS:
         for i, name in enumerate(name_lst):
             if name in i_n:
                 name_lst[i] = i_n[0]

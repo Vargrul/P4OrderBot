@@ -1,3 +1,7 @@
+## [0.1b3] - NotReleased
+- Changed from PICKL to PostgreSQL for proper database handling.
+- TODO!: Still need some of the functions from the order controller to the database_ctrl/ctrl.py
+
 ## [0.1b2] - 2021-03-08
 ### Added
 - !fill command now gives and error is the order would be over filled

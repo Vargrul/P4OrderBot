@@ -1,6 +1,6 @@
 import discord
 from discord import user
-from orderbot.src.user import User
+from orderbot.src.database_ctrl import User
 import orderbot.src.errors as error
 from typing import List
 import pickle

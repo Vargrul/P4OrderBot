@@ -2,6 +2,7 @@ import re
 from typing import List, Pattern, Tuple
 
 import orderbot.src.regexes as regexes
+from orderbot.src.database_ctrl import Item
 
 def valid_id_and_link(arg: str):
     regex = regexes.regex_id_and_link()
@@ -48,7 +49,7 @@ def valid_shorthand_p4(shorthand: str) -> bool:
     else:
         return False
 
-def extract_shorthand_p4(shorthand: str) -> Tuple[List[str], List[int]]:
+def extract_shorthand_p4(shorthand: str) -> List[Item]:
     regex = get_shorthand_regex(shorthand)
     res = regex.findall(shorthand)
 
@@ -59,6 +60,8 @@ def extract_shorthand_p4(shorthand: str) -> Tuple[List[str], List[int]]:
     else:
         str_lst = [s[0] for s in res]
         int_lst = [int(s[1]) for s in res]
+    
+    # Convert to Items
     return str_lst, int_lst
 
 def extract_invalid_part_shorthand_p4(shorthand: str) -> str:
@@ -71,3 +74,4 @@ def any_part_valid_shorthand_p4(shorthand: str) -> bool:
         return True
     else:
         return False
+        

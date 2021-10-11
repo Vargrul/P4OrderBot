@@ -1,5 +1,4 @@
 import os
-from dotenv import load_dotenv
 from pathlib import Path
 
 import discord
@@ -18,8 +17,6 @@ class P4OrderBot():
 
         # add cogs
         global_data.load_nonstatic_globals()
-
-        load_dotenv()
         self._TOKEN = os.getenv('DISCORD_TOKEN')
 
         self._init_misc()

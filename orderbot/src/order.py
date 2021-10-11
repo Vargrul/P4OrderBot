@@ -1,6 +1,6 @@
 from datetime import datetime
-from orderbot.src.user import User
-from orderbot.src.item import Item
+from orderbot.src.database_ctrl import User
+from orderbot.src.database_ctrl import Item
 import orderbot.src.global_data as global_data
 from typing import List
 
